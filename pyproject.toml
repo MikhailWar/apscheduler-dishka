@@ -41,6 +41,8 @@ zizmor = ["zizmor == 1.22.0"]
 ci = [
     "ruff == 0.14.14",
     "mypy == 1.19.1",
+    { include-group = "tests" },
+
 ]
 tests = [
     "pytest == 9.0.2",
