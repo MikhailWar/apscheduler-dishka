@@ -3,9 +3,9 @@ from abc import abstractmethod
 from typing import Protocol
 
 from apscheduler.schedulers.blocking import BlockingScheduler
-from dishka import Provider, Scope, provide, FromDishka, make_container
+from dishka import FromDishka, Provider, Scope, make_container, provide
 
-from apscheduler_dishka.integration import setup_dishka, inject
+from apscheduler_dishka.integration import inject, setup_dishka
 
 
 class IRepository(Protocol):
@@ -42,8 +42,7 @@ def task_1(
         data: str,
         interactor: FromDishka[Interactor],
 ):
-    result = interactor(data)
-    print(result)
+    interactor(data)
 
 
 def main():
@@ -60,8 +59,18 @@ def main():
         auto_inject=False,
     )
 
-    scheduler.add_job(task_1, "interval", seconds=5, args=["World"])
-    scheduler.add_job(task_1, "interval", seconds=5, kwargs={"data": "Hello"})
+    scheduler.add_job(
+        task_1,
+        trigger="interval",
+        seconds=5,
+        args=["World"],
+    )
+    scheduler.add_job(
+        task_1,
+        trigger="interval",
+        seconds=5,
+        kwargs={"data": "Hello"},
+    )
 
     try:
         scheduler.start()

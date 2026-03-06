@@ -2,7 +2,12 @@ import pytest
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.blocking import BlockingScheduler
-from dishka import make_container, Container, AsyncContainer, make_async_container
+from dishka import (
+    AsyncContainer,
+    Container,
+    make_async_container,
+    make_container,
+)
 
 from apscheduler_dishka import setup_dishka
 from tests.common import AppProvider
@@ -15,20 +20,20 @@ class SchedulerAutoInject(BackgroundScheduler):
 @pytest.fixture
 def container_dishka() -> Container:
     return make_container(
-        AppProvider()
+        AppProvider(),
     )
 
 
 @pytest.fixture
 def async_container_dishka() -> AsyncContainer:
     return make_async_container(
-        AppProvider()
+        AppProvider(),
     )
 
 
 @pytest.fixture
 def sync_scheduler(
-        container_dishka: Container
+        container_dishka: Container,
 ) -> BlockingScheduler:
     scheduler = BackgroundScheduler()
     setup_dishka(
@@ -43,7 +48,7 @@ def sync_scheduler(
 
 @pytest.fixture
 def sync_scheduler_auto_inject(
-        container_dishka: Container
+        container_dishka: Container,
 ) -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
     setup_dishka(
@@ -60,8 +65,9 @@ def sync_scheduler_auto_inject(
 def jobs_stores_redis_default() -> dict[str, RedisJobStore]:
     job_stores: dict[str, RedisJobStore] = {
         "default": RedisJobStore(
-            jobs_key="dispatched_trips_jobs", run_times_key="dispatched_trips_running"
-        )
+            jobs_key="dispatched_trips_jobs",
+            run_times_key="dispatched_trips_running",
+        ),
     }
     return job_stores
 

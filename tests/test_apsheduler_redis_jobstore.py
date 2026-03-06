@@ -16,7 +16,7 @@ def test_apscheduler_redis_jobstore_inject(
 
 
 def test_apscheduler_redis_jobstore_auto_inject(
-        sync_scheduler_redis_jobstore_auto_inject: BackgroundScheduler
+        sync_scheduler_redis_jobstore_auto_inject: BackgroundScheduler,
 ):
     command_data = "test_apscheduler_redis_jobstore_inject"
     assert command_data == run_sync_job(

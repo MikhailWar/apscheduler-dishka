@@ -4,9 +4,9 @@ from abc import abstractmethod
 from typing import Protocol
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from dishka import Provider, Scope, provide, FromDishka, make_async_container
+from dishka import FromDishka, Provider, Scope, make_async_container, provide
 
-from apscheduler_dishka.integration import setup_dishka, inject
+from apscheduler_dishka.integration import inject, setup_dishka
 
 
 class IRepository(Protocol):
@@ -43,11 +43,7 @@ async def async_task_1(
         data: str,
         interactor: FromDishka[Interactor],
 ):
-    result = await interactor(data)
-    print(result)
-
-
-
+    await interactor(data)
 
 
 async def main():
@@ -64,13 +60,23 @@ async def main():
         auto_inject=False,
     )
 
-    scheduler.add_job(async_task_1, "interval", seconds=5, args=["World"])
-    scheduler.add_job(async_task_1, "interval", seconds=5, kwargs={"data": "Hello"})
+    scheduler.add_job(
+        async_task_1,
+        trigger="interval",
+        seconds=5,
+        args=["World"],
+    )
+    scheduler.add_job(
+        async_task_1,
+        trigger="interval",
+        seconds=5,
+        kwargs={"data": "Hello"},
+    )
 
     try:
         scheduler.start()
         while True:
-            await asyncio.sleep(1)
+            await asyncio.Event().wait()
 
     finally:
         scheduler.shutdown()

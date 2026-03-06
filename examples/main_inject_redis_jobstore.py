@@ -4,9 +4,9 @@ from typing import Protocol
 
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.schedulers.blocking import BlockingScheduler
-from dishka import Provider, Scope, provide, FromDishka, make_container
+from dishka import FromDishka, Provider, Scope, make_container, provide
 
-from apscheduler_dishka.integration import setup_dishka, inject
+from apscheduler_dishka.integration import inject, setup_dishka
 
 
 class IRepository(Protocol):
@@ -43,8 +43,7 @@ def task_1(
         data: str,
         interactor: FromDishka[Interactor],
 ):
-    result = interactor(data)
-    print(result)
+    interactor(data)
 
 
 def main():
@@ -56,23 +55,39 @@ def main():
     # pip install redis
     job_stores: dict[str, RedisJobStore] = {
         "default": RedisJobStore(
-            jobs_key="dispatched_trips_jobs", run_times_key="dispatched_trips_running"
-        )
+            jobs_key="dispatched_trips_jobs",
+            run_times_key="dispatched_trips_running",
+        ),
     }
 
     scheduler = BlockingScheduler(
-        job_stores=job_stores
+        job_stores=job_stores,
     )
 
-    container = make_container(AdaptersProvider(), InteractorProvider())
+    container = make_container(
+        AdaptersProvider(),
+        InteractorProvider(),
+    )
+
     setup_dishka(
         container=container,
         scheduler=scheduler,
         auto_inject=False,
     )
 
-    scheduler.add_job(task_1, "interval", seconds=5, args=["World"])
-    scheduler.add_job(task_1, "interval", seconds=5, kwargs={"data": "Hello"})
+    scheduler.add_job(
+        task_1,
+        trigger="interval",
+        seconds=5,
+        args=["World"],
+    )
+
+    scheduler.add_job(
+        task_1,
+        trigger="interval",
+        seconds=5,
+        kwargs={"data": "Hello"},
+    )
 
     try:
         scheduler.start()

@@ -1,7 +1,7 @@
 import asyncio
 
 import pytest
-from dishka import FromDishka, AsyncContainer
+from dishka import AsyncContainer, FromDishka
 
 from apscheduler_dishka import inject
 from tests.common import Interactor, create_async_scheduler
@@ -9,7 +9,7 @@ from tests.common import Interactor, create_async_scheduler
 
 @pytest.mark.asyncio
 async def test_apscheduler_async_inject(
-        async_container_dishka: AsyncContainer
+        async_container_dishka: AsyncContainer,
 ):
     async with create_async_scheduler(
             container=async_container_dishka,
@@ -33,7 +33,7 @@ async def test_apscheduler_async_inject(
 
 @pytest.mark.asyncio
 async def test_apscheduler_async_auto_inject(
-        async_container_dishka: AsyncContainer
+        async_container_dishka: AsyncContainer,
 ):
     async with create_async_scheduler(
             container=async_container_dishka,

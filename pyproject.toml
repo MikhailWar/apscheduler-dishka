@@ -41,7 +41,6 @@ zizmor = ["zizmor == 1.22.0"]
 ci = [
     "ruff == 0.14.14",
     "mypy == 1.19.1",
-    "nox == 2025.11.12",
 ]
 tests = [
     "pytest == 9.0.2",
@@ -51,7 +50,6 @@ tests = [
     "asgi-lifespan == 2.1.0",
 ]
 dev = [
-    "pytest>=9.0.2",
     "uv == 0.9.26",
     { include-group = "ci" },
     { include-group = "typos" },

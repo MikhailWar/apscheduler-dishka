@@ -1,10 +1,11 @@
 from dishka.integrations.base import is_dishka_injected
 
 from apscheduler_dishka import inject
-from tests.common import task
 
 
 def test_task_inject():
+    def task():
+        return "It is function"
     task_injected = inject(task)
 
     assert is_dishka_injected(task_injected) is True
