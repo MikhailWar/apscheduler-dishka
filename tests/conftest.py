@@ -2,7 +2,7 @@ import pytest
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.blocking import BlockingScheduler
-from dishka import make_container, Container
+from dishka import make_container, Container, AsyncContainer, make_async_container
 
 from apscheduler_dishka import setup_dishka
 from tests.common import AppProvider
@@ -15,6 +15,13 @@ class SchedulerAutoInject(BackgroundScheduler):
 @pytest.fixture
 def container_dishka() -> Container:
     return make_container(
+        AppProvider()
+    )
+
+
+@pytest.fixture
+def async_container_dishka() -> AsyncContainer:
+    return make_async_container(
         AppProvider()
     )
 

@@ -2,11 +2,15 @@ import datetime
 import time
 from abc import abstractmethod, ABC
 from asyncio import Protocol
+from contextlib import asynccontextmanager
 from typing import ParamSpec, TypeVar
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
-from dishka import provide, Scope, Provider, FromDishka
+from dishka import provide, Scope, Provider, FromDishka, AsyncContainer
 from dishka.integrations.base import InjectFunc
+
+from apscheduler_dishka import setup_dishka
 
 
 class IRepository(Protocol, ABC):
@@ -53,6 +57,7 @@ def task(
         interactor: FromDishka[Interactor],
 ):
     result = interactor.execute(data)
+    return result
 
 
 P = ParamSpec("P")
@@ -73,13 +78,28 @@ def run_sync_job(
     if inject_func is not None:
         job = inject_func(job)
 
-    run_date = datetime.datetime.now() + datetime.timedelta(seconds=0.5)
     scheduler.add_job(
         job,
-        run_date=run_date,
+        trigger="date",
         kwargs={"_command_data": command_data},
     )
     time.sleep(1)
 
     return result
+
+
+@asynccontextmanager
+async def create_async_scheduler(
+        container: AsyncContainer,
+        auto_inject: bool | InjectFunc[P, T] = False,
+) -> AsyncIOScheduler:
+    scheduler = AsyncIOScheduler()
+    setup_dishka(
+        container=container,
+        scheduler=scheduler,
+        auto_inject=auto_inject
+    )
+    scheduler.start()
+    yield scheduler
+    scheduler.shutdown()
 

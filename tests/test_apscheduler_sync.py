@@ -1,7 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from apscheduler.schedulers.background import BackgroundScheduler
-
 from apscheduler_dishka import inject
 from tests.common import run_sync_job
 
