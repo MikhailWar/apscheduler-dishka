@@ -2,6 +2,7 @@ import logging
 from abc import abstractmethod
 from typing import Protocol
 
+from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.schedulers.blocking import BlockingScheduler
 from dishka import Provider, Scope, provide, FromDishka, make_container
 
@@ -52,7 +53,17 @@ def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    scheduler = BlockingScheduler()
+    # pip install redis
+    job_stores: dict[str, RedisJobStore] = {
+        "default": RedisJobStore(
+            jobs_key="dispatched_trips_jobs", run_times_key="dispatched_trips_running"
+        )
+    }
+
+    scheduler = BlockingScheduler(
+        job_stores=job_stores
+    )
+
     container = make_container(AdaptersProvider(), InteractorProvider())
     setup_dishka(
         container=container,

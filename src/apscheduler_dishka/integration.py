@@ -6,19 +6,29 @@ from apscheduler.schedulers.base import BaseScheduler
 from dishka import AsyncContainer, Scope
 from dishka.integrations.base import wrap_injection, is_dishka_injected, InjectFunc
 
-from apscheduler_dishka.container import DishkaSchedulerContainer
-from apscheduler_dishka.executor import DishkaSchedulerExecutor
+from apscheduler_dishka.errors import NotConfigureDishkaContainerError
+from apscheduler_dishka.executor import DishkaSchedulerExecutor, DISHKA_CONTAINER_KEY
 
 P = ParamSpec("P")
 T = TypeVar("T")
 
 
+
+
 def inject(func: Callable[P, T]) -> Callable[P, T]:
+    def container_getter(*args, **kwargs):
+        job_kwargs: dict = args[1]
+        container: Container | AsyncContainer = job_kwargs.get(DISHKA_CONTAINER_KEY)
+        if container is None:
+            raise NotConfigureDishkaContainerError()
+        job_kwargs.pop(DISHKA_CONTAINER_KEY, None)
+        return container
+
     return wrap_injection(
         func=func,
         is_async=iscoroutinefunction(func),
         remove_depends=True,
-        container_getter=lambda _, __: DishkaSchedulerContainer.dishka_container,
+        container_getter=container_getter,
         scope=Scope.REQUEST,
     )
 
@@ -42,16 +52,22 @@ def setup_dishka(
         scheduler: BaseScheduler,
         auto_inject: bool | InjectFunc[P, T] = False,
 ):
-    DishkaSchedulerContainer.dishka_container = container
+
+    dishka_executor = DishkaSchedulerExecutor(
+        inject_func=inject,
+        dishka_container=container,
+    )
+
     if auto_inject is not False:
         inject_func: InjectFunc[P, T]
         if auto_inject is True:
             inject_func = inject
         else:
             inject_func = auto_inject
-
         scheduler.add_job = _add_job_inject(scheduler.add_job, inject_func)
-        scheduler.add_executor(
-            DishkaSchedulerExecutor(inject_func),
-            alias="default",
+        dishka_executor = DishkaSchedulerExecutor(
+            inject_func=inject,
+            dishka_container=container,
         )
+
+    scheduler.add_executor(dishka_executor, alias="default")
