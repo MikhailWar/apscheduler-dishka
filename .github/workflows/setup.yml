@@ -50,7 +50,7 @@ jobs:
 
       - name: "Run tests"
         run: |
-          nox -t ci
+          pytest
           mv .coverage .coverage.${{ matrix.python-version }}
 
       - name: Store coverage file
