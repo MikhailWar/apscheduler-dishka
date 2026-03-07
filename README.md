@@ -1,9 +1,5 @@
 # APScheduler integration for Dishka
 
-[![PyPI version](https://badge.fury.io/py/apscheduler-dishka.svg)](https://pypi.python.org/pypi/apscheduler-dishka)
-[![Supported versions](https://img.shields.io/pypi/pyversions/apscheduler-dishka.svg)](https://pypi.python.org/pypi/apscheduler-dishka)
-[![Downloads](https://img.shields.io/pypi/dm/apscheduler-dishka.svg)](https://pypistats.org/packages/apscheduler-dishka)
-[![License](https://img.shields.io/github/license/MikhailWar/apscheduler-dishka)](https://github.com/MikhailWar/apscheduler-dishka/blob/main/LICENSE)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/MikhailWar/apscheduler-dishka/setup.yml)](https://github.com/MikhailWar/apscheduler-dishka/actions)
 
 This package provides integration of [Dishka](http://github.com/reagento/dishka/) dependency injection framework and [APScheduler](https://github.com/agronholm/apscheduler), an advanced Python scheduler.
