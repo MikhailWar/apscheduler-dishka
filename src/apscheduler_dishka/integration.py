@@ -3,6 +3,8 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from typing import Any, ParamSpec, TypeVar, cast
 
+from apscheduler.executors.asyncio import AsyncIOExecutor
+from apscheduler.executors.base import BaseExecutor
 from apscheduler.schedulers.asyncio import (
     AsyncIOScheduler,
 )
@@ -72,9 +74,16 @@ def create_executor(
         inject_func: InjectFunc[P, T],
 
 ) -> DishkaSchedulerExecutor | AsyncDishkaSchedulerExecutor:
+    current_default_executor: BaseExecutor = scheduler._create_default_executor()  # noqa: SLF001, E501
+
     if (
-            not isinstance(scheduler, AsyncIOScheduler)
-            and isinstance(dishka_container, AsyncContainer)
+            (
+                    isinstance(current_default_executor, AsyncIOExecutor)
+                    and not isinstance(dishka_container, AsyncContainer)
+            )
+            or (
+            isinstance(dishka_container, AsyncContainer)
+            and not isinstance(scheduler, AsyncIOScheduler))
     ):
         raise FailedToSetupDishkaContainerError(
             message="AsyncContainer can be used only with AsyncIOScheduler",
@@ -85,11 +94,11 @@ def create_executor(
             inject_func=inject_func,
             dishka_container=dishka_container,
         )
-
-    return DishkaSchedulerExecutor(
-        inject_func=inject_func,
-        dishka_container=dishka_container,
-    )
+    else:
+        return DishkaSchedulerExecutor(
+            inject_func=inject_func,
+            dishka_container=dishka_container,
+        )
 
 
 def setup_dishka(
