@@ -1,9 +1,8 @@
-from .executor import AsyncDishkaSchedulerExecutor, DishkaSchedulerExecutor
+from .executor import inject_executor
 from .integration import inject, setup_dishka
 
 __all__ = [
-    "AsyncDishkaSchedulerExecutor",
-    "DishkaSchedulerExecutor",
     "inject",
+    "inject_executor",
     "setup_dishka",
 ]

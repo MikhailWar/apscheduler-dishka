@@ -3,11 +3,7 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from typing import Any, ParamSpec, TypeVar, cast
 
-from apscheduler.executors.asyncio import AsyncIOExecutor
-from apscheduler.executors.base import BaseExecutor
-from apscheduler.schedulers.asyncio import (
-    AsyncIOScheduler,
-)
+from apscheduler.job import Job
 from apscheduler.schedulers.base import (
     BaseScheduler,
 )
@@ -19,13 +15,11 @@ from dishka.integrations.base import (
 )
 
 from apscheduler_dishka.errors import (
-    FailedToSetupDishkaContainerError,
     NotConfigureDishkaContainerError,
 )
 from apscheduler_dishka.executor import (
     DISHKA_CONTAINER_KEY,
-    AsyncDishkaSchedulerExecutor,
-    DishkaSchedulerExecutor,
+    inject_executor,
 )
 
 P = ParamSpec("P")
@@ -55,50 +49,20 @@ def inject(func: Callable[P, T]) -> Callable[P, T]:
     )
 
 
-def _add_job_inject(
-        function: Callable[..., Any],
-        inject_func: Callable[..., Any],
-) -> Callable[..., Any]:
-    @wraps(function)
-    def wrapper(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+def _inject_scheduler(
+        scheduler: BaseScheduler,
+        inject_func: InjectFunc[P, T],
+) -> BaseScheduler:
+    original_add_job = scheduler.add_job
+
+    @wraps(scheduler.add_job)
+    def _add_job(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Job:
         if not is_dishka_injected(func):
             func = inject_func(func)
-        return function(func, *args, **kwargs)
+        return original_add_job(func, *args, **kwargs)
 
-    return wrapper
-
-
-def create_executor(
-        scheduler: BaseScheduler,
-        dishka_container: AsyncContainer | Container,
-        inject_func: InjectFunc[P, T],
-
-) -> DishkaSchedulerExecutor | AsyncDishkaSchedulerExecutor:
-    current_default_executor: BaseExecutor = scheduler._create_default_executor()  # noqa: SLF001, E501
-
-    if (
-            (
-                    isinstance(current_default_executor, AsyncIOExecutor)
-                    and not isinstance(dishka_container, AsyncContainer)
-            )
-            or (
-            isinstance(dishka_container, AsyncContainer)
-            and not isinstance(scheduler, AsyncIOScheduler))
-    ):
-        raise FailedToSetupDishkaContainerError(
-            message="AsyncContainer can be used only with AsyncIOScheduler",
-        )
-
-    if isinstance(dishka_container, AsyncContainer):
-        return AsyncDishkaSchedulerExecutor(
-            inject_func=inject_func,
-            dishka_container=dishka_container,
-        )
-    else:
-        return DishkaSchedulerExecutor(
-            inject_func=inject_func,
-            dishka_container=dishka_container,
-        )
+    scheduler.add_job = _add_job
+    return scheduler
 
 
 def setup_dishka(
@@ -107,23 +71,26 @@ def setup_dishka(
         *,
         auto_inject: bool | InjectFunc[P, T] = False,
 ) -> None:
-    dishka_executor = create_executor(
-        scheduler=scheduler,
-        dishka_container=container,
-        inject_func=inject,
-    )
+    inject_func: InjectFunc[P, T] = inject
 
     if auto_inject is not False:
-        inject_func: InjectFunc[P, T]
         if auto_inject is True:
             inject_func = inject
         else:
             inject_func = auto_inject
-        scheduler.add_job = _add_job_inject(scheduler.add_job, inject_func)
-        dishka_executor = create_executor(
-            scheduler=scheduler,
-            dishka_container=container,
-            inject_func=inject,
-        )
 
-    scheduler.add_executor(dishka_executor, alias="default")
+        _inject_scheduler(scheduler=scheduler, inject_func=inject_func)
+
+    current_default_executor = scheduler._create_default_executor()  # noqa: SLF001
+    scheduler._create_default_executor = lambda: inject_executor(  # noqa: SLF001
+        executor=current_default_executor,
+        dishka_container=container,
+        inject_func=inject_func,
+    )
+
+    for executor in scheduler._executors.values():  # noqa: SLF001
+        inject_executor(
+            executor=executor,
+            dishka_container=container,
+            inject_func=inject_func,
+        )
