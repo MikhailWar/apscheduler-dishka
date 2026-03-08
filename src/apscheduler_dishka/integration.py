@@ -14,13 +14,11 @@ from dishka.integrations.base import (
     wrap_injection,
 )
 
+from apscheduler_dishka import inject_executor
 from apscheduler_dishka.errors import (
     NotConfigureDishkaContainerError,
 )
-from apscheduler_dishka.executor import (
-    DISHKA_CONTAINER_KEY,
-    inject_executor,
-)
+from apscheduler_dishka.executors.inject import DISHKA_CONTAINER_KEY
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -87,7 +85,6 @@ def setup_dishka(
         dishka_container=container,
         inject_func=inject_func,
     )
-
     for executor in scheduler._executors.values():  # noqa: SLF001
         inject_executor(
             executor=executor,

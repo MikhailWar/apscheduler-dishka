@@ -1,19 +1,19 @@
 from functools import wraps
 from typing import Any, Final, ParamSpec, TypeVar
 
-from apscheduler.executors.asyncio import (
-    AsyncIOExecutor,
-)
+from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.executors.base import BaseExecutor
 from apscheduler.job import Job
 from dishka import AsyncContainer, Container
 from dishka.integrations.base import InjectFunc, is_dishka_injected
 
 from apscheduler_dishka.errors import FailedToInjectDishkaContainerError
+from apscheduler_dishka.executors._integrations.tornado_ import (
+    TornadoExecutor,
+)
 
 P = ParamSpec("P")
 T = TypeVar("T")
-
 DISHKA_CONTAINER_KEY: Final[str] = "dishka_container"
 
 
@@ -37,7 +37,7 @@ def inject_executor(
     original_do_submit_job = executor._do_submit_job  # noqa: SLF001
     if (
             isinstance(dishka_container, AsyncContainer)
-            and not isinstance(executor, AsyncIOExecutor)
+            and not isinstance(executor, (AsyncIOExecutor, TornadoExecutor))
     ):
         raise FailedToInjectDishkaContainerError(
             message=f"{executor} not supported AsyncContainer",

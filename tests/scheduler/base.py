@@ -1,7 +1,8 @@
+from collections.abc import Container
+
 import pytest
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.base import BaseScheduler
-from dishka import Container
 
 from apscheduler_dishka import inject, setup_dishka
 from tests.common import run_sync_job
