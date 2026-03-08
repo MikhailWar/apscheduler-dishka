@@ -1,15 +1,12 @@
 import time
 from abc import ABC, abstractmethod
 from asyncio import Protocol
-from contextlib import asynccontextmanager
-from typing import ParamSpec, TypeVar
+from typing import Final, ParamSpec, TypeVar
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
-from dishka import AsyncContainer, FromDishka, Provider, Scope, provide
+from apscheduler.schedulers.base import BaseScheduler
+from dishka import FromDishka, Provider, Scope, provide
 from dishka.integrations.base import InjectFunc
-
-from apscheduler_dishka import setup_dishka
 
 
 class IRepository(Protocol, ABC):
@@ -26,7 +23,7 @@ class ImplRepository(IRepository):
     def get(self, data: str) -> str:
         return data
 
-    def get_async(self, data: str) -> str:
+    async def get_async(self, data: str) -> str:
         return data
 
 
@@ -54,6 +51,9 @@ class AppProvider(Provider):
 P = ParamSpec("P")
 T = TypeVar("T")
 
+NOT_RUNNING_JOB_ERROR: Final[str] = "Job is not running"
+WAIT_TIMEOUT_EVENT_SECONDS: int = 2
+
 
 def run_sync_job(
         scheduler: BackgroundScheduler,
@@ -78,18 +78,37 @@ def run_sync_job(
     return result
 
 
-@asynccontextmanager
-async def create_async_scheduler(
-        container: AsyncContainer,
-        *,
-        auto_inject: bool | InjectFunc[P, T] = False,
-) -> AsyncIOScheduler:
-    scheduler = AsyncIOScheduler()
-    setup_dishka(
-        container=container,
-        scheduler=scheduler,
-        auto_inject=auto_inject,
-    )
-    scheduler.start()
-    yield scheduler
-    scheduler.shutdown()
+class Event(Protocol):
+    def set(self): ...
+
+    def is_set(self) -> bool: ...
+
+
+def tracked_execute_task(
+        scheduler: BaseScheduler,
+        event_done: Event,
+        inject_func: InjectFunc[P, T] = None,
+):
+    def task(interactor: FromDishka[Interactor]):
+        interactor.execute("Running in task event")
+        event_done.set()
+
+    if inject_func is not None:
+        task = inject_func(task)
+
+    scheduler.add_job(task, "date")
+
+
+def tracked_execute_async_task(
+        scheduler: BaseScheduler,
+        event_done: Event,
+        inject_func: InjectFunc[P, T] = None,
+):
+    async def task(interactor: FromDishka[Interactor]):
+        await interactor.async_execute("Running in task event")
+        event_done.set()
+
+    if inject_func is not None:
+        task = inject_func(task)
+
+    scheduler.add_job(task, "date")

@@ -1,4 +1,4 @@
-from .executor import inject_executor
+from .executors.inject import inject_executor
 from .integration import inject, setup_dishka
 
 __all__ = [

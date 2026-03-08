@@ -9,7 +9,7 @@ from dishka.integrations.base import is_dishka_injected
 
 from apscheduler_dishka import inject, inject_executor
 from apscheduler_dishka.errors import FailedToInjectDishkaContainerError
-from apscheduler_dishka.executor import DISHKA_CONTAINER_KEY
+from apscheduler_dishka.executors.inject import DISHKA_CONTAINER_KEY
 
 
 @pytest.mark.parametrize(
@@ -19,7 +19,7 @@ from apscheduler_dishka.executor import DISHKA_CONTAINER_KEY
 
     ],
     ids=[
-        "async_executor",
+        "thread_executor",
     ],
 )
 def test_error_inject_executor(
