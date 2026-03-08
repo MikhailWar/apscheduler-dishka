@@ -70,8 +70,6 @@ INTEGRATIONS = [
 ]
 
 
-
-
 @nox.session(tags=["ci"])
 def unit(session: nox.Session) -> None:
     session.install(
