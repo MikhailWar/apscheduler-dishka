@@ -61,6 +61,8 @@ jobs:
           path: .coverage.${{ matrix.python-version }}
           if-no-files-found: error
           include-hidden-files: true
+    env:
+      QT_QPA_PLATFORM: offscreen
 
   zizmor:
     name: "zizmor"

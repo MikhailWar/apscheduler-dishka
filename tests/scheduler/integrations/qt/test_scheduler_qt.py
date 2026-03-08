@@ -16,9 +16,9 @@ from tests.common import (
 def test_qt_scheduler_inject(
         qt_scheduler: QtScheduler,
         container_dishka: Container,
+        q_application: QApplication,
 ):
     event_done = threading.Event()
-    app = QApplication.instance() or QApplication([])
 
     setup_dishka(
         container=container_dishka,
@@ -33,7 +33,7 @@ def test_qt_scheduler_inject(
 
     end_time = time.time() + WAIT_TIMEOUT_EVENT_SECONDS
     while not event_done.is_set() and time.time() < end_time:
-        app.processEvents()
+        q_application.processEvents()
 
     assert event_done.is_set(), NOT_RUNNING_JOB_ERROR
 
@@ -41,9 +41,10 @@ def test_qt_scheduler_inject(
 def test_qt_scheduler_auto_inject(
         qt_scheduler: QtScheduler,
         container_dishka: Container,
+        q_application: QApplication,
+
 ):
     event_done = threading.Event()
-    app = QApplication.instance() or QApplication([])
 
     setup_dishka(
         container=container_dishka,
@@ -58,6 +59,6 @@ def test_qt_scheduler_auto_inject(
 
     end_time = time.time() + WAIT_TIMEOUT_EVENT_SECONDS
     while not event_done.is_set() and time.time() < end_time:
-        app.processEvents()
+        q_application.processEvents()
 
     assert event_done.is_set(), NOT_RUNNING_JOB_ERROR
