@@ -70,8 +70,15 @@ INTEGRATIONS = [
 ]
 
 
+
+
 @nox.session(tags=["ci"])
 def unit(session: nox.Session) -> None:
+    session.install(
+        *EDITABLE_INSTALL,
+        "-r", "requirements/test.txt",
+        silent=False,
+    )
     session.run("pytest", "tests/unit")
 
 
