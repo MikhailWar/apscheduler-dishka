@@ -1,1 +1,2 @@
+-r test.txt
 tornado>=6.5.4

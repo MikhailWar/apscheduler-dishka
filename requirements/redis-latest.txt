@@ -1,1 +1,2 @@
+-r test.txt
 redis>=7.3.0

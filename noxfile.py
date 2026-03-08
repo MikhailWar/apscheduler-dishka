@@ -82,6 +82,11 @@ def unit(session: nox.Session) -> None:
 
 @nox.session(tags=["ci"])
 def scheduler_core(session: nox.Session) -> None:
+    session.install(
+        *EDITABLE_INSTALL,
+        "-r", "requirements/test.txt",
+        silent=False,
+    )
     session.run("pytest", "tests/scheduler/core")
 
 
@@ -93,6 +98,5 @@ for env in INTEGRATIONS:
     def scheduler_integration(session: nox.Session, env=env) -> None:
         if env.constraint and not env.constraint.condition():
             session.skip(env.constraint.reason)
-
         session.install(*EDITABLE_INSTALL, "-r", env.get_req(), silent=False)
         session.run("pytest", env.get_tests())
