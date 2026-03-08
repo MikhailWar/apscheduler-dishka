@@ -1,6 +1,6 @@
 import pytest
-from PyQt5.QtWidgets import QApplication
 from apscheduler.schedulers.qt import QtScheduler
+from PyQt5.QtWidgets import QApplication
 
 
 @pytest.fixture
