@@ -17,7 +17,7 @@ class FailedToInjectDishkaContainerError(DishkaError):
         return self._message
 
 
-class FailedToSetupDishkaContainerError(DishkaError):
+class RunJobError(DishkaError):
     def __init__(self, message: str):
         self._message = message
 

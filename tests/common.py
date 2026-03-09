@@ -1,9 +1,7 @@
-import time
 from abc import ABC, abstractmethod
 from asyncio import Protocol
 from typing import Final, ParamSpec, TypeVar
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.base import BaseScheduler
 from dishka import FromDishka, Provider, Scope, provide
 from dishka.integrations.base import InjectFunc
@@ -53,29 +51,6 @@ T = TypeVar("T")
 
 NOT_RUNNING_JOB_ERROR: Final[str] = "Job is not running"
 WAIT_TIMEOUT_EVENT_SECONDS: int = 2
-
-
-def run_sync_job(
-        scheduler: BackgroundScheduler,
-        command_data: str,
-        inject_func: InjectFunc[P, T] | None = None,
-) -> str:
-    result: str = None
-
-    def job(_command_data: str, interactor: FromDishka[Interactor]):
-        nonlocal result
-        result = interactor.execute(_command_data)
-
-    if inject_func is not None:
-        job = inject_func(job)
-
-    scheduler.add_job(
-        job,
-        trigger="date",
-        kwargs={"_command_data": command_data},
-    )
-    time.sleep(1)
-    return result
 
 
 class Event(Protocol):

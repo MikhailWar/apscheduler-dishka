@@ -1,4 +1,5 @@
 from functools import wraps
+from inspect import iscoroutinefunction
 from typing import Any, Final, ParamSpec, TypeVar
 
 from apscheduler.executors.asyncio import AsyncIOExecutor
@@ -7,7 +8,10 @@ from apscheduler.job import Job
 from dishka import AsyncContainer, Container
 from dishka.integrations.base import InjectFunc, is_dishka_injected
 
-from apscheduler_dishka.errors import FailedToInjectDishkaContainerError
+from apscheduler_dishka.errors import (
+    FailedToInjectDishkaContainerError,
+    RunJobError,
+)
 from apscheduler_dishka.executors._integrations.tornado_ import (
     TornadoExecutor,
 )
@@ -49,6 +53,17 @@ def inject_executor(
             *args: Any,
             **kwargs: Any,
     ) -> Any:
+
+        if not iscoroutinefunction(job.func) and isinstance(
+                dishka_container, AsyncContainer,
+        ):
+            raise RunJobError(
+                message=(
+                    "Async container requires an "
+                    f"async function: {job.func.__name__}"
+                ),
+            )
+
         job = _inject_job(
             job=job,
             inject_func=inject_func,

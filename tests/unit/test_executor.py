@@ -4,12 +4,19 @@ import pytest
 from apscheduler.executors.base import BaseExecutor
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.job import Job
-from dishka import AsyncContainer, Container
+from dishka import AsyncContainer, Container, FromDishka
 from dishka.integrations.base import is_dishka_injected
 
 from apscheduler_dishka import inject, inject_executor
-from apscheduler_dishka.errors import FailedToInjectDishkaContainerError
+from apscheduler_dishka.errors import (
+    FailedToInjectDishkaContainerError,
+    RunJobError,
+)
+from apscheduler_dishka.executors._integrations.tornado_ import (
+    TornadoExecutor,  # noqa: PLC2701
+)
 from apscheduler_dishka.executors.inject import DISHKA_CONTAINER_KEY
+from tests.common import Interactor
 
 
 @pytest.mark.parametrize(
@@ -55,3 +62,26 @@ def test_inject_executor(
     assert is_dishka_injected(job.func) is True
     assert executor._do_submit_job != original_do_submit_job  # noqa: SLF001
     assert job.kwargs[DISHKA_CONTAINER_KEY] == container_dishka
+
+
+def test_error_run_sync_task_with_async_container(
+        async_container_dishka: Container,
+):
+    def task(
+            interactor: FromDishka[Interactor],
+    ):
+        interactor.execute("Running task")
+
+    executor = Mock(spec=TornadoExecutor)
+    inject_executor(
+        executor=executor,
+        dishka_container=async_container_dishka,
+        inject_func=inject,
+    )
+
+    job = Mock(spec=Job)
+    job.func = task
+    job.kwargs = {}
+
+    with pytest.raises(RunJobError):
+        executor._do_submit_job(job, run_times=[])  # noqa: SLF001
