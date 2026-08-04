@@ -28,9 +28,19 @@ def _inject_job(
 ) -> Job:
     if not is_dishka_injected(job.func):
         job.func = inject_func(job.func)
-    job.kwargs[DISHKA_CONTAINER_KEY] = dishka_container
 
-    return job
+    job_slots: Final[tuple[str, ...]] = tuple(
+        slot for slot in Job.__slots__ if slot != "__weakref__"
+    )
+    injected_job: Job = object.__new__(Job)
+    for slot in job_slots:
+        setattr(injected_job, slot, getattr(job, slot))
+    injected_job.kwargs = {
+        **job.kwargs,
+        DISHKA_CONTAINER_KEY: dishka_container,
+    }
+
+    return injected_job
 
 
 def inject_executor(
