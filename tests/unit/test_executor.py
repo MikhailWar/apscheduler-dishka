@@ -57,11 +57,13 @@ def test_inject_executor(
     job = Mock(spec=Job)
     job.func = test_job
     job.kwargs = {}
+
     executor._do_submit_job(job, run_times=[])  # noqa: SLF001
 
-    assert is_dishka_injected(job.func) is True
+    injected_job = original_do_submit_job.call_args.args[0]
+    assert is_dishka_injected(injected_job.func) is True
     assert executor._do_submit_job != original_do_submit_job  # noqa: SLF001
-    assert job.kwargs[DISHKA_CONTAINER_KEY] == container_dishka
+    assert injected_job.kwargs[DISHKA_CONTAINER_KEY] == container_dishka
 
 
 def test_error_run_sync_task_with_async_container(
